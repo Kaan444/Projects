@@ -1,0 +1,113 @@
+import pygame 
+from pygame.locals import * 
+import random
+
+pygame.init()
+
+#This is making the game window 
+WIDTH, HEIGHT  = 640,480 
+window = pygame.display.set_mode((WIDTH,HEIGHT))
+pygame.display.set_caption("Pong")
+
+#This is setting up the colours on the GUI 
+BLACK  = (0,0,0)
+WHITE = (255, 255, 255)
+
+#Here we're setting up the game clock 
+clock = pygame.time.Clock()
+
+#Set up the game variables 
+ball_x = WIDTH // 2 
+ball_y = HEIGHT // 2
+ball_radius = 10 
+ball_dx = 5
+ball_dy = 5
+player_score = 0
+computer_score = 0
+
+paddle_width = 10 
+paddle_height = 60 
+player_paddle_x = 10 
+player_paddle_y = HEIGHT // 2 - paddle_height // 2
+computer_paddle_x = WIDTH - 10  - paddle_width
+computer_paddle_y = HEIGHT // 2 - paddle_height // 2 
+
+running = True
+
+#Lets create the game loop 
+while running: 
+    #handle events 
+    for event  in pygame.event.get():
+        if event.type == QUIT:
+            running = False
+    
+    #handle player input 
+    keys = pygame.key.get_pressed()
+    if keys[K_UP] and player_paddle_y > 0:
+        player_paddle_y -= 5
+    if keys[K_DOWN] and player_paddle_y < HEIGHT - paddle_height:
+        player_paddle_y += 5
+
+    #Update the game state
+    ball_x += ball_dx
+    ball_y += ball_dy
+
+    if ball_x - ball_radius <= player_paddle_x + paddle_width and \
+        player_paddle_y <= ball_y <= player_paddle_y + paddle_height:
+        ball_dx *= -1
+    if ball_x + ball_radius >= computer_paddle_x and \
+        computer_paddle_y <= ball_y <= computer_paddle_y + paddle_height:
+        ball_dx *= -1
+    if ball_y - ball_radius <= 0 or ball_y + ball_radius >= HEIGHT:
+        ball_dy *= -1
+
+    # Check for scoring
+    if ball_x - ball_radius <= 0:
+        computer_score += 1
+        if computer_score >= 10:
+            # Display congratulations screen for computer victory
+            running = False
+        else:
+            # Reset ball position for the next round
+            ball_x = WIDTH // 2
+            ball_y = HEIGHT // 2
+            ball_dx *= -1
+            ball_dy *= random.choice([1, -1])
+
+    if ball_x + ball_radius >= WIDTH:
+        player_score += 1
+        if player_score >= 10:
+            # Display congratulations screen for player victory
+            running = False
+        else:
+            # Reset ball position for the next round
+            ball_x = WIDTH // 2
+            ball_y = HEIGHT // 2
+            ball_dx *= -1
+            ball_dy *= random.choice([1, -1])
+
+    # Computer opponent logic
+    paddle_speed = 6
+    if computer_paddle_y < ball_y and computer_paddle_y < HEIGHT - paddle_height:
+        computer_paddle_y += paddle_speed
+    if computer_paddle_y > ball_y and computer_paddle_y > 0:
+        computer_paddle_y -= paddle_speed
+        
+    # Render the game
+    window.fill(BLACK)
+    pygame.draw.rect(window, WHITE, (player_paddle_x, player_paddle_y, paddle_width, paddle_height))
+    pygame.draw.rect(window, WHITE, (computer_paddle_x, computer_paddle_y, paddle_width, paddle_height))
+    pygame.draw.circle(window, WHITE, (ball_x, ball_y), ball_radius)
+
+    score_font = pygame.font.Font(None, 36)
+    player_score_text = score_font.render(f"Player: {player_score}", True, WHITE)
+    computer_score_text = score_font.render(f"Computer: {computer_score}", True, WHITE)
+    window.blit(player_score_text, (20, 20))
+    window.blit(computer_score_text, (WIDTH - computer_score_text.get_width() - 20, 20))
+
+    pygame.display.flip()
+    clock.tick(60)
+
+# Clean up
+pygame.quit()
+
